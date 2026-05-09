@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financeiro Inteligente</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { 
+            background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%); 
+            background-attachment: fixed;
+            color: #f1f5f9; 
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1400px; margin: auto; padding: 20px; }
+        .hidden { display: none; }
+        
+        /* Efeito 3D nos Containers (Glassmorphism + Neumorphism) */
+        .card, .formulario, .lista, .grafico { 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 20px; 
+            border-radius: 14px; 
+            margin-bottom: 20px; 
+            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.4), inset -2px -2px 5px rgba(0,0,0,0.1);
+            color: #1e293b;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .auth-box { 
+            max-width: 400px; 
+            background: rgba(255, 255, 255, 0.95); 
+            margin: 60px auto; padding: 30px; border-radius: 15px; 
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5); color: #1e293b;
+        }
+
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.9rem; }
+        .input-group input, .input-group select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; outline: none; }
+        
+        button { width: 100%; border: none; padding: 14px; border-radius: 10px; background: #2563eb; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 0 #1e40af; }
+        button:hover { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 6px 0 #1e40af; }
+        button:active { transform: translateY(2px); box-shadow: 0 0 0 #1e40af; }
+
+        .btn-secundario { background: #64748b; box-shadow: 0 4px 0 #475569; }
+        .btn-editar { width: auto; padding: 8px 14px; background: #f59e0b; font-size: 0.85rem; border-radius: 8px; color: white; cursor: pointer; border: none; box-shadow: 0 3px 0 #b45309; }
+        .btn-excluir { width: auto; padding: 8px 14px; background: #e11d48; font-size: 0.85rem; border-radius: 8px; color: white; cursor: pointer; border: none; margin-left: 8px; box-shadow: 0 3px 0 #9f1239; }
+        
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card h3 { font-size: 0.9rem; color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .valor { font-size: 22px; font-weight: bold; }
+        .receita { color: #16a34a; }
+        .despesa { color: #dc2626; }
+        .invest { color: #0284c7; }
+        .saldo { color: #2563eb; }
+
+        .img-icon { width: 32px; height: 32px; object-fit: contain; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2)); }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #e2e8f0; }
+        .nav-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .nav-buttons button { width: auto; padding: 10px 20px; }
+        h1 { color: #ffffff; text-shadow: 2px 4px 8px rgba(0,0,0,0.5); }
+        .acoes { display: flex; align-items: center; }
+    </style>
+</head>
+
+<body>
+
+    <div id="loginTela" class="auth-box">
+        <h1>🔐 Login</h1><br>
+        <div class="input-group"><label>Email</label><input type="email" id="loginEmail"></div>
+        <div class="input-group"><label>Senha</label><input type="password" id="loginSenha"></div>
+        <button onclick="login()">Entrar</button><br><br>
+        <button onclick="mostrarTela('cadastroTela')" class="btn-secundario">Criar Conta</button>
+    </div>
+
+    <div id="cadastroTela" class="auth-box hidden">
+        <h1>📝 Cadastro</h1><br>
+        <div class="input-group"><label>Nome</label><input type="text" id="cadastroNome"></div>
+        <div class="input-group"><label>Email</label><input type="email" id="cadastroEmail"></div>
+        <div class="input-group"><label>Senha</label><input type="password" id="cadastroSenha"></div>
+        <button onclick="cadastrar()">Cadastrar</button><br><br>
+        <button onclick="mostrarTela('loginTela')" class="btn-secundario">Voltar</button>
+    </div>
+
+    <div id="app" class="container hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h1>💰 Finança Fácil</h1>
+            <div class="nav-buttons">
+                <button onclick="abrirHistorico()">📋 Histórico</button>
+                <button onclick="abrirCartoes()">💳 Cartões</button>
+                <button onclick="logout()" style="background:#dc2626; box-shadow: 0 4px 0 #991b1b;">Sair</button>
+            </div>
+        </div>
+
+        <div class="cards">
+            <div class="card">
+                <h3><img src="https://cdn-icons-png.flaticon.com/512/9382/9382189.png" class="img-icon"> Entradas</h3>
+                <div class="valor receita" id="cardReceitas">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3><img src="https://cdn-icons-png.flaticon.com/512/9431/9431168.png" class="img-icon"> Saídas</h3>
+                <div class="valor despesa" id="cardDespesas">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3><img src="https://cdn-icons-png.flaticon.com/512/4241/4241664.png" class="img-icon"> Investimentos</h3>
+                <div class="valor invest" id="cardInvestimentos">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3><img src="https://cdn-icons-png.flaticon.com/512/9382/9382193.png" class="img-icon"> Saldo Líquido</h3>
+                <div class="valor saldo" id="cardSaldo">R$ 0,00</div>
+            </div>
+        </div>
+
+        <div class="formulario">
+            <h2 id="formTitulo">Nova Transação</h2><br>
+            <input type="hidden" id="editIndex" value="-1">
+            <div class="form-grid">
+                <div class="input-group"><label>Descrição</label><input type="text" id="tDesc"></div>
+                <div class="input-group"><label>Valor</label><input type="number" id="tValor" step="0.01"></div>
+                <div class="input-group">
+                    <label>Tipo</label>
+                    <select id="tTipo" onchange="toggleCampos()">
+                        <option value="receita">Entrada</option>
+                        <option value="despesa">Saída</option>
+                    </select>
+                </div>
+                <div class="input-group hidden" id="divClassificacao">
+                    <label>Classificação</label>
+                    <select id="tClassificacao" onchange="toggleCampos()">
+                        <option value="Essencial">Essencial</option>
+                        <option value="Variável">Variável</option>
+                        <option value="Investimento">Investimento</option>
+                    </select>
+                </div>
+                <div class="input-group"><label>Categoria</label><select id="tCat"></select></div>
+                <div class="input-group"><label>Data</label><input type="date" id="tData"></div>
+                <div class="input-group hidden" id="divPagamento">
+                    <label>Pagamento</label>
+                    <select id="tForma" onchange="toggleCartao()">
+                        <option value="avista">À Vista / Pix</option>
+                        <option value="credito">Cartão de Crédito</option>
+                    </select>
+                </div>
+                <div class="input-group hidden" id="divCartao"><label>Cartão</label><select id="tCartaoSelect"></select></div>
+            </div>
+            <button onclick="salvarTransacao()" id="btnSalvar">Adicionar Transação</button>
+            <button onclick="limparFormulario()" id="btnCancelarEdit" class="btn-secundario hidden" style="margin-top:10px">Cancelar Edição</button>
+        </div>
+
+        <div class="dashboard">
+            <div class="grafico"><h2>📅 Evolução Mensal</h2><canvas id="chartMensal"></canvas></div>
+            <div class="grafico"><h2>💵 Distribuição da Renda (%)</h2><canvas id="chartTipos"></canvas></div>
+            <div class="grafico"><h2>📊 Saída por Categoria</h2><canvas id="chartCat"></canvas></div>
+        </div>
+    </div>
+
+    <div id="telaCartoes" class="container hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h1>💳 Gestão de Cartões</h1>
+            <button onclick="mostrarTela('app')" style="width:auto">⬅ Voltar</button>
+        </div>
+        <div class="dashboard">
+            <div class="formulario">
+                <h3>Novo Cartão</h3><br>
+                <div class="form-grid">
+                    <div class="input-group"><label>Nome</label><input type="text" id="cNome" placeholder="Ex: Nubank"></div>
+                    <div class="input-group"><label>Fechamento (Dia)</label><input type="number" id="cFech" min="1" max="31"></div>
+                    <div class="input-group"><label>Vencimento (Dia)</label><input type="number" id="cVenc" min="1" max="31"></div>
+                </div>
+                <button onclick="salvarCartao()">Cadastrar Cartão</button>
+                <br><br>
+                <h3>Meus Cartões</h3><br>
+                <div id="listaCartoes"></div>
+            </div>
+            <div class="grafico"><h2>📊 Gastos no Cartão</h2><canvas id="chartCartaoMensal"></canvas></div>
+        </div>
+    </div>
+
+    <div id="telaHistorico" class="container hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h1>📋 Histórico</h1>
+            <button onclick="mostrarTela('app')" style="width:auto">⬅ Voltar</button>
+        </div>
+        <div id="listaContainer" class="lista"></div>
+    </div>
+
+    <script>
+        // Registra o plugin de labels para mostrar os percentuais
+        Chart.register(ChartDataLabels);
+
+        let user = null;
+        let charts = {};
+
+        // Configuração padrão para efeito de relevo nos gráficos
+        const config3D = {
+            borderWidth: 2,
+            borderColor: 'rgba(255, 255, 255, 0.5)',
+            hoverOffset: 20,
+            borderRadius: 5
+        };
+
+        function mostrarTela(id) {
+            document.querySelectorAll('.container, .auth-box').forEach(t => t.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            if(id === 'app') atualizarDashboard();
+            if(id === 'telaCartoes') { listarCartoes(); atualizarGraficoCartao(); }
+        }
+
+        // Funções de toggle omitidas por brevidade, permanecem iguais às suas originais
+        function toggleCampos() {
+            const tipo = document.getElementById('tTipo').value;
+            const classif = document.getElementById('tClassificacao').value;
+            const isDespesa = tipo === 'despesa';
+            document.getElementById('divClassificacao').classList.toggle('hidden', !isDespesa);
+            document.getElementById('divPagamento').classList.toggle('hidden', !(isDespesa && classif !== 'Investimento'));
+            const catSelect = document.getElementById('tCat');
+            catSelect.innerHTML = "";
+            let lista = (isDespesa && classif === 'Investimento') ? ["CDB", "Ações", "FIIs", "Tesouro"] : (tipo === 'receita' ? ["Salário", "Extra"] : ["Alimentação", "Moradia", "Lazer", "Outros"]);
+            lista.forEach(c => { let opt = document.createElement('option'); opt.value = c; opt.innerText = c; catSelect.appendChild(opt); });
+            toggleCartao();
+        }
+
+        function toggleCartao() {
+            const isCredito = document.getElementById('tForma').value === 'credito' && !document.getElementById('divPagamento').classList.contains('hidden');
+            document.getElementById('divCartao').classList.toggle('hidden', !isCredito);
+            if(isCredito && user.cartoes) {
+                document.getElementById('tCartaoSelect').innerHTML = user.cartoes.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('') || "<option value=''>Cadastre um cartão</option>";
+            }
+        }
+
+        function atualizarDashboard() {
+            let r = 0, d = 0, i = 0;
+            const dEnt = new Array(12).fill(0), dSai = new Array(12).fill(0), tMap = { "Essencial": 0, "Variável": 0, "Investimento": 0 }, cMap = {};
+            
+            user.transacoes.forEach(t => {
+                const mes = new Date(t.data + 'T00:00:00').getMonth();
+                if(t.tipo === 'receita') { r += t.valor; dEnt[mes] += t.valor; }
+                else {
+                    if(t.classif === 'Investimento') i += t.valor; else d += t.valor;
+                    dSai[mes] += t.valor;
+                    tMap[t.classif] += t.valor;
+                    cMap[t.cat] = (cMap[t.cat] || 0) + t.valor;
+                }
+            });
+
+            document.getElementById('cardReceitas').innerText = `R$ ${r.toFixed(2)}`;
+            document.getElementById('cardDespesas').innerText = `R$ ${d.toFixed(2)}`;
+            document.getElementById('cardInvestimentos').innerText = `R$ ${i.toFixed(2)}`;
+            document.getElementById('cardSaldo').innerText = `R$ ${(r - d - i).toFixed(2)}`;
+
+            // --- GRÁFICO DE PIZZA (Distribuição com Percentual) ---
+            if(charts.t) charts.t.destroy();
+            charts.t = new Chart(document.getElementById('chartTipos'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(tMap),
+                    datasets: [{
+                        data: Object.values(tMap),
+                        backgroundColor: ['#ef4444', '#f59e0b', '#0284c7'],
+                        ...config3D
+                    }]
+                },
+                options: {
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 14 },
+                            formatter: (value, ctx) => {
+                                let sum = 0;
+                                let dataArr = ctx.chart.data.datasets[0].data;
+                                dataArr.map(data => { sum += data; });
+                                let percentage = (value * 100 / sum).toFixed(1) + "%";
+                                return sum > 0 ? percentage : '';
+                            }
+                        }
+                    }
+                }
+            });
+
+            // --- GRÁFICO MENSAL (Barras 3D simulado) ---
+            if(charts.m) charts.m.destroy();
+            charts.m = new Chart(document.getElementById('chartMensal'), {
+                type: 'bar',
+                data: {
+                    labels: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+                    datasets: [
+                        {label:'Entradas', data:dEnt, backgroundColor:'#16a34a', ...config3D},
+                        {label:'Saídas', data:dSai, backgroundColor:'#dc2626', ...config3D}
+                    ]
+                },
+                options: {
+                    plugins: { datalabels: { display: false } }, // Esconde labels em barras para não poluir
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // --- GRÁFICO DE CATEGORIAS (Doughnut com Percentual) ---
+            if(charts.c) charts.c.destroy();
+            charts.c = new Chart(document.getElementById('chartCat'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(cMap),
+                    datasets: [{
+                        data: Object.values(cMap),
+                        backgroundColor:['#2563eb','#16a34a','#dc2626','#f59e0b','#7c3aed'],
+                        ...config3D
+                    }]
+                },
+                options: {
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: (value, ctx) => {
+                                let sum = 0;
+                                let dataArr = ctx.chart.data.datasets[0].data;
+                                dataArr.map(data => { sum += data; });
+                                let percentage = (value * 100 / sum).toFixed(1) + "%";
+                                return (value * 100 / sum) > 5 ? percentage : ''; // Só mostra se for > 5%
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Funções de salvamento e auxiliares permanecem iguais
+        function save() { 
+            let u = JSON.parse(localStorage.getItem('fin_users') || '[]');
+            let idx = u.findIndex(x => x.email === user.email);
+            u[idx] = user;
+            localStorage.setItem('fin_users', JSON.stringify(u));
+            localStorage.setItem('fin_logged', JSON.stringify(user));
+        }
+
+        function login() { 
+            const e = document.getElementById('loginEmail').value, s = document.getElementById('loginSenha').value; 
+            let f = (JSON.parse(localStorage.getItem('fin_users')) || []).find(x => x.email === e && x.senha === s); 
+            if(f) { user = f; localStorage.setItem('fin_logged', JSON.stringify(user)); mostrarTela('app'); } else alert("Erro!"); 
+        }
+
+        function cadastrar() { 
+            let u = JSON.parse(localStorage.getItem('fin_users')) || []; 
+            u.push({nome: document.getElementById('cadastroNome').value, email: document.getElementById('cadastroEmail').value, senha: document.getElementById('cadastroSenha').value, transacoes: [], cartoes: []}); 
+            localStorage.setItem('fin_users', JSON.stringify(u)); 
+            mostrarTela('loginTela'); 
+        }
+
+        function logout() { localStorage.removeItem('fin_logged'); location.reload(); }
+        function abrirCartoes() { mostrarTela('telaCartoes'); }
+        function abrirHistorico() {
+            mostrarTela('telaHistorico');
+            document.getElementById('listaContainer').innerHTML = user.transacoes.map((t, index) => ({...t, originalIndex: index}))
+                .sort((a,b) => new Date(b.data)-new Date(a.data))
+                .map(t => `<div class="item">
+                    <div><strong>${t.desc}</strong><br><small>${t.data} | ${t.cat}</small></div>
+                    <div class="acoes">
+                        <strong class="${t.tipo}" style="margin-right:15px">R$ ${t.valor.toFixed(2)}</strong>
+                        <button class="btn-editar" onclick="editarLancamento(${t.originalIndex})">Alterar</button>
+                        <button class="btn-excluir" onclick="excluirLancamento(${t.originalIndex})">Excluir</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function salvarTransacao() {
+            const desc = document.getElementById('tDesc').value;
+            const valor = parseFloat(document.getElementById('tValor').value);
+            const tipo = document.getElementById('tTipo').value;
+            const data = document.getElementById('tData').value;
+            if(!desc || !valor || !data) return alert("Preencha tudo!");
+            const novaTrans = { desc, valor, tipo, data, cat: document.getElementById('tCat').value, classif: tipo === 'receita' ? 'Entrada' : document.getElementById('tClassificacao').value, forma: document.getElementById('tForma').value, cartao: document.getElementById('tCartaoSelect').value };
+            const editIdx = parseInt(document.getElementById('editIndex').value);
+            if (editIdx > -1) user.transacoes[editIdx] = novaTrans; else user.transacoes.push(novaTrans);
+            save(); limparFormulario(); atualizarDashboard();
+        }
+
+        function salvarCartao() {
+            const nome = document.getElementById('cNome').value;
+            const fech = document.getElementById('cFech').value;
+            const venc = document.getElementById('cVenc').value;
+            if(!nome || !fech || !venc) return alert("Preencha tudo!");
+            if(!user.cartoes) user.cartoes = [];
+            user.cartoes.push({ nome, fech, venc });
+            save(); listarCartoes(); document.getElementById('cNome').value = ""; document.getElementById('cFech').value = ""; document.getElementById('cVenc').value = "";
+        }
+
+        function listarCartoes() {
+            const lista = document.getElementById('listaCartoes');
+            if(!user.cartoes || user.cartoes.length === 0) { lista.innerHTML = "Nenhum cartão."; return; }
+            lista.innerHTML = user.cartoes.map((c, i) => `<div class="item"><span><strong>${c.nome}</strong></span><button class="btn-excluir" onclick="user.cartoes.splice(${i},1); save(); listarCartoes();">Excluir</button></div>`).join('');
+        }
+
+        function atualizarGraficoCartao() {
+            const dCartao = new Array(12).fill(0);
+            user.transacoes.forEach(t => { if(t.forma === 'credito') dCartao[new Date(t.data + 'T00:00:00').getMonth()] += t.valor; });
+            if(charts.cartao) charts.cartao.destroy();
+            charts.cartao = new Chart(document.getElementById('chartCartaoMensal'), { type: 'bar', data: { labels: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], datasets: [{ label: 'Gasto Cartão', data: dCartao, backgroundColor: '#7c3aed', ...config3D }]}});
+        }
+
+        function limparFormulario() {
+            document.getElementById('tDesc').value = ""; document.getElementById('tValor').value = ""; document.getElementById('editIndex').value = "-1";
+            document.getElementById('btnSalvar').innerText = "Adicionar Transação"; document.getElementById('btnCancelarEdit').classList.add('hidden');
+        }
+
+        window.onload = () => { if(localStorage.getItem('fin_logged')) { user = JSON.parse(localStorage.getItem('fin_logged')); mostrarTela('app'); } };
+    </script>
+</body>
+</html>
