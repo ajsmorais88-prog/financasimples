@@ -4,413 +4,663 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financeiro Inteligente</title>
+    <title>Finança Fácil | Inteligência Financeira</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
-        body { 
-            background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%); 
-            background-attachment: fixed;
-            color: #f1f5f9; 
-            min-height: 100vh;
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg-dark: #0f172a;
+            --text-main: #f8fafc;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
-        .container { max-width: 1400px; margin: auto; padding: 20px; }
-        .hidden { display: none; }
-        
-        /* Efeito 3D nos Containers (Glassmorphism + Neumorphism) */
-        .card, .formulario, .lista, .grafico { 
-            background: rgba(255, 255, 255, 0.95); 
-            padding: 20px; 
-            border-radius: 14px; 
-            margin-bottom: 20px; 
-            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.4), inset -2px -2px 5px rgba(0,0,0,0.1);
-            color: #1e293b;
-            border: 1px solid rgba(255,255,255,0.2);
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg-dark); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+
+        .bg-glow {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+            z-index: -1;
         }
 
-        .auth-box { 
-            max-width: 400px; 
-            background: rgba(255, 255, 255, 0.95); 
-            margin: 60px auto; padding: 30px; border-radius: 15px; 
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5); color: #1e293b;
+        #moneyCanvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
         }
 
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.9rem; }
-        .input-group input, .input-group select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; outline: none; }
+        .container { max-width: 1000px; margin: auto; padding: 20px; position: relative; z-index: 1; }
+        .hidden { display: none !important; }
         
-        button { width: 100%; border: none; padding: 14px; border-radius: 10px; background: #2563eb; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 0 #1e40af; }
-        button:hover { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 6px 0 #1e40af; }
-        button:active { transform: translateY(2px); box-shadow: 0 0 0 #1e40af; }
+        .card, .formulario { 
+            background: rgba(30, 41, 59, 0.5); 
+            backdrop-filter: blur(10px);
+            padding: 24px; border-radius: 20px; margin-bottom: 20px; 
+            border: 1px solid var(--glass-border);
+        }
 
-        .btn-secundario { background: #64748b; box-shadow: 0 4px 0 #475569; }
-        .btn-editar { width: auto; padding: 8px 14px; background: #f59e0b; font-size: 0.85rem; border-radius: 8px; color: white; cursor: pointer; border: none; box-shadow: 0 3px 0 #b45309; }
-        .btn-excluir { width: auto; padding: 8px 14px; background: #e11d48; font-size: 0.85rem; border-radius: 8px; color: white; cursor: pointer; border: none; margin-left: 8px; box-shadow: 0 3px 0 #9f1239; }
-        
-        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .card h3 { font-size: 0.9rem; color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-        .valor { font-size: 22px; font-weight: bold; }
-        .receita { color: #16a34a; }
-        .despesa { color: #dc2626; }
-        .invest { color: #0284c7; }
-        .saldo { color: #2563eb; }
+        .features-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px; margin-top: 50px; width: 100%;
+        }
+        .feature-card {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border);
+            padding: 25px; border-radius: 20px; transition: 0.3s; text-align: center;
+        }
+        .feature-card:hover { background: rgba(255, 255, 255, 0.07); transform: translateY(-5px); }
+        .feature-card span { font-size: 2.5rem; display: block; margin-bottom: 15px; }
 
-        .img-icon { width: 32px; height: 32px; object-fit: contain; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2)); }
+        .dash-card { text-align: left; display: flex; flex-direction: column; justify-content: center; }
+        .dash-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; color: #94a3b8; font-size: 0.9rem; font-weight: 500; }
+        .dash-icon { font-size: 1.2rem; background: rgba(255, 255, 255, 0.05); width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+
+        .input-group { margin-bottom: 15px; position: relative; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #94a3b8; font-size: 0.85rem; }
+        .input-group input, .input-group select { 
+            width: 100%; padding: 12px; border-radius: 10px; 
+            border: 1px solid var(--glass-border); background: rgba(15, 23, 42, 0.6);
+            color: white; outline: none; transition: 0.3s;
+        }
+
+        .cta-button {
+            padding: 12px 25px; background: var(--primary); color: white;
+            border: none; border-radius: 12px; cursor: pointer; font-weight: 600;
+            transition: 0.3s; margin: 5px;
+        }
+        .cta-button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        .receita { color: #4ade80; font-weight: bold; }
+        .despesa { color: #f87171; font-weight: bold; }
+
+        .filtros-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .hist-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
+
+        .form-grid-cartao { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .input-container span { position: absolute; left: 12px; top: 38px; color: #94a3b8; z-index: 2; }
+        .input-container input { padding-left: 38px !important; }
+
+        .cartoes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
+        .card-item { 
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%); 
+            border: 1px solid var(--glass-border); border-radius: 15px; padding: 20px;
+            position: relative; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            transition: 0.3s ease;
+        }
+        .card-item:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .card-chip {
+            width: 55px; height: 40px; margin-bottom: 15px; border-radius: 8px;
+            background: linear-gradient(135deg, #fcd34d, #f59e0b); position: relative;
+            overflow: hidden; box-shadow: inset 0 0 5px rgba(255,255,255,0.4);
+        }
+        .card-chip::before, .card-chip::after { content: ''; position: absolute; background: rgba(120, 53, 15, 0.35); }
+        .card-chip::before { width: 100%; height: 2px; top: 12px; left: 0; box-shadow: 0 8px rgba(120, 53, 15, 0.35), 0 16px rgba(120, 53, 15, 0.35); }
+        .card-chip::after { width: 2px; height: 100%; left: 18px; top: 0; box-shadow: 10px 0 rgba(120, 53, 15, 0.35), 20px 0 rgba(120, 53, 15, 0.35); }
         
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        
-        .item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #e2e8f0; }
-        .nav-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-        .nav-buttons button { width: auto; padding: 10px 20px; }
-        h1 { color: #ffffff; text-shadow: 2px 4px 8px rgba(0,0,0,0.5); }
-        .acoes { display: flex; align-items: center; }
+        .card-banco { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; }
+        .card-info { display: flex; justify-content: space-between; margin-top: 15px; }
+        .card-info small { color: #94a3b8; text-transform: uppercase; font-size: 0.65rem; display: block; }
+        .card-info b { font-size: 1rem; }
+        .card-delete { position: absolute; top: 10px; right: 10px; background: rgba(248, 113, 113, 0.2); color: #f87171; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; }
+        .card-delete:hover { background: #ef4444; color: white; }
+
+        .btn-fatura {
+            width: 100%; margin-top: 15px; padding: 8px; 
+            background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border);
+            color: white; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+            transition: 0.3s;
+        }
+        .btn-fatura:hover { background: var(--primary); }
+
+        #chartWrapper { width: 100%; height: 350px; }
     </style>
 </head>
 
 <body>
+    <div class="bg-glow"></div>
 
-    <div id="loginTela" class="auth-box">
-        <h1>🔐 Login</h1><br>
-        <div class="input-group"><label>Email</label><input type="email" id="loginEmail"></div>
-        <div class="input-group"><label>Senha</label><input type="password" id="loginSenha"></div>
-        <button onclick="login()">Entrar</button><br><br>
-        <button onclick="mostrarTela('cadastroTela')" class="btn-secundario">Criar Conta</button>
+    <div id="homeTela" class="container">
+        <canvas id="moneyCanvas"></canvas>
+        <div style="min-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; position: relative; z-index: 2;">
+			<img src="Logo.png" alt="Logo Finança Fácil" style="width: 400px; height: auto; margin-bottom: 0px;">
+            <button class="cta-button" style="padding: 15px 40px; font-size: 1.1rem;" onclick="mostrarTela('loginTela')">Entrar no Sistema</button>
+
+            <div class="features-grid">
+                <div class="feature-card"><span>📊</span><h3>Fluxo Inteligente</h3><p>Veja o impacto futuro das suas parcelas hoje.</p></div>
+                <div class="feature-card"><span>💳</span><h3>Multicartões</h3><p>Gerencie limites de diversas instituições.</p></div>
+                <div class="feature-card"><span>📈</span><h3>Gráficos Reais</h3><p>Visualização dinâmica de comprometimento mensal.</p></div>
+            </div>
+        </div>
     </div>
 
-    <div id="cadastroTela" class="auth-box hidden">
-        <h1>📝 Cadastro</h1><br>
-        <div class="input-group"><label>Nome</label><input type="text" id="cadastroNome"></div>
-        <div class="input-group"><label>Email</label><input type="email" id="cadastroEmail"></div>
-        <div class="input-group"><label>Senha</label><input type="password" id="cadastroSenha"></div>
-        <button onclick="cadastrar()">Cadastrar</button><br><br>
-        <button onclick="mostrarTela('loginTela')" class="btn-secundario">Voltar</button>
+    <div id="loginTela" class="container hidden">
+
+       <div class="card" style="max-width: 400px; margin: 60px auto;">
+	   <img src="Logo.png" alt="Logo Finança Fácil" style="width: 250px; height: auto; display: block; margin: 0 auto 20px auto;">
+    
+       <h2 style="text-align: center; margin-bottom: 25px;">🔐 Login</h2>
+       <div class="input-group"><label>E-mail</label><input type="email" id="lEmail"></div>
+       <div class="input-group"><label>Senha</label><input type="password" id="lSenha"></div>
+       <button class="cta-button" style="width: 100%;" onclick="login()">Entrar</button>
+    
+    <div style="display: flex; flex-direction: column; gap: 5px; margin-top: 15px;">
+        <button onclick="mostrarTela('cadTela')" style="background:none; border:none; color:var(--primary); cursor:pointer;">Criar Conta</button>
+        <button onclick="mostrarTela('esqueceuSenhaTela')" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size: 0.8rem;">Alterar senha</button>
+    </div>
+	</div>
+</div>
+
+   <div id="esqueceuSenhaTela" class="container hidden">
+        <div class="card" style="max-width: 400px; margin: 60px auto;">
+            <h2 style="text-align: center; margin-bottom: 25px;">🔑 Recuperar Acesso</h2>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px; text-align: center;">Valide seus dados para atualizar a senha.</p>
+            
+            <div class="input-group"><label>E-mail</label><input type="email" id="fEmail"></div>
+            <div class="input-group"><label>Senha Atual</label><input type="password" id="fSenhaAtual"></div>
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
+            <div class="input-group"><label>Nova Senha</label><input type="password" id="fNovaSenha"></div>
+            <div class="input-group"><label>Repetir Nova Senha</label><input type="password" id="fRepetirNovaSenha"></div>
+            
+            <button class="cta-button" style="width: 100%;" onclick="alterarSenha()">Atualizar Senha</button>
+            <button onclick="mostrarTela('loginTela')" style="color:#94a3b8; width:100%; margin-top:15px; background:none; border:none; cursor:pointer;">Voltar ao Login</button>
+        </div>
+    </div>
+    </div>
+
+    <div id="cadTela" class="container hidden">
+        <div class="card" style="max-width: 400px; margin: 60px auto;">
+            <h2 style="text-align: center; margin-bottom: 25px;">📝 Cadastro</h2>
+            <div class="input-group"><label>Nome</label><input type="text" id="cNomeUser"></div>
+            <div class="input-group"><label>E-mail</label><input type="email" id="cEmail"></div>
+            <div class="input-group"><label>Senha</label><input type="password" id="cSenha"></div>
+            <button class="cta-button" style="width: 100%;" onclick="cadastrar()">Cadastrar</button>
+            <button onclick="mostrarTela('loginTela')" style="color:#94a3b8; width:100%; margin-top:15px; background:none; border:none; cursor:pointer;">Voltar</button>
+        </div>
     </div>
 
     <div id="app" class="container hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h1>💰 Finança Fácil</h1>
-            <div class="nav-buttons">
-                <button onclick="abrirHistorico()">📋 Histórico</button>
-                <button onclick="abrirCartoes()">💳 Cartões</button>
-                <button onclick="logout()" style="background:#dc2626; box-shadow: 0 4px 0 #991b1b;">Sair</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; margin-bottom:30px; gap: 15px;">
+            <h2>Olá, <span id="userNameDisplay" style="color: var(--primary);"></span></h2>
+            <div>
+                <button onclick="abrirHistorico()" class="cta-button" style="background: #475569;">📂 Histórico</button>
+                <button onclick="mostrarTela('telaCartoes')" class="cta-button">💳 Bancos & Cartões</button>
+                <button onclick="logout()" style="background:#ef4444;" class="cta-button">Sair</button>
             </div>
         </div>
 
-        <div class="cards">
-            <div class="card">
-                <h3><img src="https://cdn-icons-png.flaticon.com/512/9382/9382189.png" class="img-icon"> Entradas</h3>
-                <div class="valor receita" id="cardReceitas">R$ 0,00</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px;">
+            <div class="card dash-card">
+                <div class="dash-card-header"><div class="dash-icon">📥</div><span>Entradas</span></div>
+                <div class="receita" id="dashReceitas" style="font-size: 1.6rem;">R$ 0,00</div>
             </div>
-            <div class="card">
-                <h3><img src="https://cdn-icons-png.flaticon.com/512/9431/9431168.png" class="img-icon"> Saídas</h3>
-                <div class="valor despesa" id="cardDespesas">R$ 0,00</div>
+            <div class="card dash-card">
+                <div class="dash-card-header"><div class="dash-icon">📤</div><span>Saídas (Mês Atual)</span></div>
+                <div class="despesa" id="dashDespesas" style="font-size: 1.6rem;">R$ 0,00</div>
             </div>
-            <div class="card">
-                <h3><img src="https://cdn-icons-png.flaticon.com/512/4241/4241664.png" class="img-icon"> Investimentos</h3>
-                <div class="valor invest" id="cardInvestimentos">R$ 0,00</div>
-            </div>
-            <div class="card">
-                <h3><img src="https://cdn-icons-png.flaticon.com/512/9382/9382193.png" class="img-icon"> Saldo Líquido</h3>
-                <div class="valor saldo" id="cardSaldo">R$ 0,00</div>
+            <div class="card dash-card">
+                <div class="dash-card-header"><div class="dash-icon">💰</div><span>Saldo Atual</span></div>
+                <div id="dashSaldo" style="font-size: 1.6rem; font-weight: bold;">R$ 0,00</div>
             </div>
         </div>
 
         <div class="formulario">
-            <h2 id="formTitulo">Nova Transação</h2><br>
-            <input type="hidden" id="editIndex" value="-1">
-            <div class="form-grid">
+            <h3>Lançar Transação</h3><br>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
                 <div class="input-group"><label>Descrição</label><input type="text" id="tDesc"></div>
-                <div class="input-group"><label>Valor</label><input type="number" id="tValor" step="0.01"></div>
-                <div class="input-group">
-                    <label>Tipo</label>
-                    <select id="tTipo" onchange="toggleCampos()">
+                <div class="input-group"><label>Valor Total</label><input type="number" id="tValor" step="0.01"></div>
+                <div class="input-group"><label>Tipo</label>
+                    <select id="tTipo" onchange="atualizarInterfaceTransacao()">
                         <option value="receita">Entrada</option>
                         <option value="despesa">Saída</option>
                     </select>
                 </div>
-                <div class="input-group hidden" id="divClassificacao">
-                    <label>Classificação</label>
-                    <select id="tClassificacao" onchange="toggleCampos()">
-                        <option value="Essencial">Essencial</option>
-                        <option value="Variável">Variável</option>
-                        <option value="Investimento">Investimento</option>
+                <div class="input-group hidden" id="divPagamento"><label>Pagamento</label>
+                    <select id="tPagamento" onchange="toggleOpcoesPagamento()">
+                        <option value="Pix / Dinheiro">Pix / Dinheiro</option>
+                        <option value="Cartão de Débito">Cartão de Débito</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito</option>
+                        <option value="Financiamento">Financiamento</option>
+                        <option value="Crediário">Crediário</option>
                     </select>
                 </div>
-                <div class="input-group"><label>Categoria</label><select id="tCat"></select></div>
-                <div class="input-group"><label>Data</label><input type="date" id="tData"></div>
-                <div class="input-group hidden" id="divPagamento">
-                    <label>Pagamento</label>
-                    <select id="tForma" onchange="toggleCartao()">
-                        <option value="avista">À Vista / Pix</option>
-                        <option value="credito">Cartão de Crédito</option>
-                    </select>
-                </div>
-                <div class="input-group hidden" id="divCartao"><label>Cartão</label><select id="tCartaoSelect"></select></div>
+                <div class="input-group hidden" id="divParcelas"><label>Nº Parcelas</label><input type="number" id="tParcelas" value="1" min="1"></div>
+                <div class="input-group hidden" id="divEscolherCartao"><label id="labelCartaoSel">Vincular a:</label><select id="tCartaoSel"></select></div>
+                <div class="input-group"><label>Data da Compra</label><input type="date" id="tData"></div>
             </div>
-            <button onclick="salvarTransacao()" id="btnSalvar">Adicionar Transação</button>
-            <button onclick="limparFormulario()" id="btnCancelarEdit" class="btn-secundario hidden" style="margin-top:10px">Cancelar Edição</button>
+            <button class="cta-button" style="width: 100%;" onclick="salvarTransacao()">Salvar Lançamento</button>
         </div>
+    </div>
 
-        <div class="dashboard">
-            <div class="grafico"><h2>📅 Evolução Mensal</h2><canvas id="chartMensal"></canvas></div>
-            <div class="grafico"><h2>💵 Distribuição da Renda (%)</h2><canvas id="chartTipos"></canvas></div>
-            <div class="grafico"><h2>📊 Saída por Categoria</h2><canvas id="chartCat"></canvas></div>
+    <div id="telaHist" class="container hidden">
+        <button onclick="mostrarTela('app')" class="cta-button" style="margin-bottom: 20px;">← Voltar</button>
+        <div class="card">
+            <h3>📂 Histórico de Lançamentos</h3><br>
+            <div class="filtros-container">
+                <div class="input-group"><label>Mês</label><select id="filtroMes" onchange="renderizarHistoricoFiltrado()"><option value="todos">Todos</option><option value="0">Jan</option><option value="1">Fev</option><option value="2">Mar</option><option value="3">Abr</option><option value="4">Mai</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Ago</option><option value="8">Set</option><option value="9">Out</option><option value="10">Nov</option><option value="11">Dez</option></select></div>
+                <div class="input-group"><label>Ano</label><select id="filtroAno" onchange="renderizarHistoricoFiltrado()"></select></div>
+            </div>
+            <div id="resumoFiltro" style="margin-bottom: 15px; font-size: 0.9rem; color: #94a3b8;"></div>
+            <div id="listaHist"></div>
         </div>
     </div>
 
     <div id="telaCartoes" class="container hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h1>💳 Gestão de Cartões</h1>
-            <button onclick="mostrarTela('app')" style="width:auto">⬅ Voltar</button>
+        <button onclick="mostrarTela('app')" class="cta-button" style="margin-bottom: 20px;">← Voltar</button>
+        <div class="card">
+            <h3>📊 Comprometimento Mensal por Instituição</h3>
+            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px;">(Soma de compras do mês + parcelas vigentes)</p>
+            <div id="chartWrapper"><canvas id="cartaoChart"></canvas></div>
         </div>
-        <div class="dashboard">
-            <div class="formulario">
-                <h3>Novo Cartão</h3><br>
-                <div class="form-grid">
-                    <div class="input-group"><label>Nome</label><input type="text" id="cNome" placeholder="Ex: Nubank"></div>
-                    <div class="input-group"><label>Fechamento (Dia)</label><input type="number" id="cFech" min="1" max="31"></div>
-                    <div class="input-group"><label>Vencimento (Dia)</label><input type="number" id="cVenc" min="1" max="31"></div>
-                </div>
-                <button onclick="salvarCartao()">Cadastrar Cartão</button>
-                <br><br>
-                <h3>Meus Cartões</h3><br>
-                <div id="listaCartoes"></div>
+        <div class="formulario">
+            <h3 style="color: var(--primary);">💳 Nova Instituição</h3><br>
+            <div class="form-grid-cartao">
+                <div class="input-group input-container"><label>Nome</label><span>🏦</span><input type="text" id="cNome"></div>
+                <div class="input-group input-container"><label>Limite</label><span>💰</span><input type="number" id="cLim"></div>
+                <div class="input-group input-container"><label>Fech.</label><span>🔒</span><input type="number" id="cFech"></div>
+                <div class="input-group input-container"><label>Venc.</label><span>📅</span><input type="number" id="cVenc"></div>
             </div>
-            <div class="grafico"><h2>📊 Gastos no Cartão</h2><canvas id="chartCartaoMensal"></canvas></div>
+            <button class="cta-button" style="width: 100%;" onclick="salvarCartao()">Cadastrar Instituição</button>
         </div>
+        
+        <h3 style="margin-bottom: 15px;">💳 Instituições Cadastradas</h3>
+        <div id="listaCartoes" class="cartoes-grid"></div>
     </div>
 
-    <div id="telaHistorico" class="container hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h1>📋 Histórico</h1>
-            <button onclick="mostrarTela('app')" style="width:auto">⬅ Voltar</button>
+    <div id="telaFatura" class="container hidden">
+        <button onclick="mostrarTela('telaCartoes')" class="cta-button" style="margin-bottom: 20px;">← Voltar aos Cartões</button>
+        <div class="card">
+            <h3>🧾 Fatura Detalhada: <span id="faturaNomeBanco" style="color: var(--primary);"></span></h3><br>
+            <div class="filtros-container">
+                <div class="input-group"><label>Mês</label><select id="faturaMes" onchange="renderizarFatura()"><option value="0">Jan</option><option value="1">Fev</option><option value="2">Mar</option><option value="3">Abr</option><option value="4">Mai</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Ago</option><option value="8">Set</option><option value="9">Out</option><option value="10">Nov</option><option value="11">Dez</option></select></div>
+                <div class="input-group"><label>Ano</label><select id="faturaAno" onchange="renderizarFatura()"></select></div>
+            </div>
+            <div id="resumoFatura" style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 20px; font-weight: bold;">
+                Total da Fatura: <span id="faturaTotal" class="despesa">R$ 0,00</span>
+            </div>
+            <div id="listaFatura"></div>
         </div>
-        <div id="listaContainer" class="lista"></div>
     </div>
+	
+	<div id="telaRelatorio" class="container hidden">
+        <button onclick="mostrarTela('app')" class="cta-button" style="margin-bottom: 20px;">← Voltar</button>
+        <div class="card">
+            <h3>📊 Relatório Comparativo</h3>
+            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 20px;">Visão geral de Entradas vs Saídas</p>
+            
+            <div class="filtros-container">
+                <div class="input-group">
+                    <label>Ano de Referência</label>
+                    <select id="relatorioAno" onchange="renderizarRelatorio()"></select>
+                </div>
+            </div>
 
-    <script>
-        // Registra o plugin de labels para mostrar os percentuais
-        Chart.register(ChartDataLabels);
+            <div id="relatorioChartWrapper" style="width: 100%; height: 400px;">
+                <canvas id="relatorioChart"></canvas>
+            </div>
+        </div>
+    </div>
+	
+	<script>
+        let userLogado = JSON.parse(localStorage.getItem('fin_logged'));
+        let meuGrafico = null;
+        let bancoAtualFatura = "";
 
-        let user = null;
-        let charts = {};
-
-        // Configuração padrão para efeito de relevo nos gráficos
-        const config3D = {
-            borderWidth: 2,
-            borderColor: 'rgba(255, 255, 255, 0.5)',
-            hoverOffset: 20,
-            borderRadius: 5
-        };
+        function iniciarEfeitoDinheiro() {
+            const canvas = document.getElementById('moneyCanvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const notas = [];
+            const emojis = ['💵', '💸', '💰', '🪙'];
+            class Nota {
+                constructor() { this.reset(); this.y = Math.random() * canvas.height; }
+                reset() { this.x = Math.random() * canvas.width; this.y = -50; this.size = Math.random() * 20 + 15; this.speed = Math.random() * 2 + 1; this.angle = Math.random() * 360; this.spin = Math.random() * 2 - 1; this.type = emojis[Math.floor(Math.random() * emojis.length)]; }
+                update() { this.y += this.speed; this.angle += this.spin; if (this.y > canvas.height) this.reset(); }
+                draw() { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle * Math.PI / 180); ctx.font = `${this.size}px Arial`; ctx.fillText(this.type, 0, 0); ctx.restore(); }
+            }
+            for (let i = 0; i < 40; i++) notas.push(new Nota());
+            function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); notas.forEach(n => { n.update(); n.draw(); }); requestAnimationFrame(animate); }
+            animate();
+        }
 
         function mostrarTela(id) {
-            document.querySelectorAll('.container, .auth-box').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.container').forEach(t => t.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
-            if(id === 'app') atualizarDashboard();
-            if(id === 'telaCartoes') { listarCartoes(); atualizarGraficoCartao(); }
+            if(id === 'app' && userLogado) {
+                document.getElementById('userNameDisplay').innerText = userLogado.nome;
+                atualizarDashboard();
+                atualizarInterfaceTransacao();
+            }
+            if(id === 'telaHist') popularAnosFiltro('filtroAno');
+            if(id === 'telaCartoes') { listarCartoes(); setTimeout(renderizarGrafico, 300); }
+            if(id === 'telaFatura') popularAnosFiltro('faturaAno');
         }
 
-        // Funções de toggle omitidas por brevidade, permanecem iguais às suas originais
-        function toggleCampos() {
-            const tipo = document.getElementById('tTipo').value;
-            const classif = document.getElementById('tClassificacao').value;
-            const isDespesa = tipo === 'despesa';
-            document.getElementById('divClassificacao').classList.toggle('hidden', !isDespesa);
-            document.getElementById('divPagamento').classList.toggle('hidden', !(isDespesa && classif !== 'Investimento'));
-            const catSelect = document.getElementById('tCat');
-            catSelect.innerHTML = "";
-            let lista = (isDespesa && classif === 'Investimento') ? ["CDB", "Ações", "FIIs", "Tesouro"] : (tipo === 'receita' ? ["Salário", "Extra"] : ["Alimentação", "Moradia", "Lazer", "Outros"]);
-            lista.forEach(c => { let opt = document.createElement('option'); opt.value = c; opt.innerText = c; catSelect.appendChild(opt); });
-            toggleCartao();
-        }
+        function alterarSenha() {
+            const email = document.getElementById('fEmail').value;
+            const senhaAtual = document.getElementById('fSenhaAtual').value;
+            const novaSenha = document.getElementById('fNovaSenha').value;
+            const repetirSenha = document.getElementById('fRepetirNovaSenha').value;
+            
+            if(!email || !senhaAtual || !novaSenha || !repetirSenha) {
+                return alert("Por favor, preencha todos os campos.");
+            }
 
-        function toggleCartao() {
-            const isCredito = document.getElementById('tForma').value === 'credito' && !document.getElementById('divPagamento').classList.contains('hidden');
-            document.getElementById('divCartao').classList.toggle('hidden', !isCredito);
-            if(isCredito && user.cartoes) {
-                document.getElementById('tCartaoSelect').innerHTML = user.cartoes.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('') || "<option value=''>Cadastre um cartão</option>";
+            if(novaSenha !== repetirSenha) {
+                return alert("A nova senha e a confirmação não coincidem.");
+            }
+            
+            let users = JSON.parse(localStorage.getItem('fin_users') || '[]');
+            const idx = users.findIndex(u => u.email === email);
+            
+            if(idx !== -1) {
+                // Valida se a senha atual informada está correta no banco
+                if(users[idx].senha !== senhaAtual) {
+                    return alert("A senha atual informada está incorreta.");
+                }
+
+                // Atualiza a senha
+                users[idx].senha = novaSenha;
+                localStorage.setItem('fin_users', JSON.stringify(users));
+                
+                // Se o usuário alterado for o que está logado, atualiza o storage de login também
+                if(userLogado && userLogado.email === email) {
+                    userLogado.senha = novaSenha;
+                    localStorage.setItem('fin_logged', JSON.stringify(userLogado));
+                }
+
+                alert("Senha alterada com sucesso!");
+                mostrarTela('loginTela');
+                
+                // Limpa os campos
+                document.getElementById('fEmail').value = "";
+                document.getElementById('fSenhaAtual').value = "";
+                document.getElementById('fNovaSenha').value = "";
+                document.getElementById('fRepetirNovaSenha').value = "";
+            } else {
+                alert("E-mail não encontrado no sistema.");
             }
         }
 
-        function atualizarDashboard() {
-            let r = 0, d = 0, i = 0;
-            const dEnt = new Array(12).fill(0), dSai = new Array(12).fill(0), tMap = { "Essencial": 0, "Variável": 0, "Investimento": 0 }, cMap = {};
-            
-            user.transacoes.forEach(t => {
-                const mes = new Date(t.data + 'T00:00:00').getMonth();
-                if(t.tipo === 'receita') { r += t.valor; dEnt[mes] += t.valor; }
-                else {
-                    if(t.classif === 'Investimento') i += t.valor; else d += t.valor;
-                    dSai[mes] += t.valor;
-                    tMap[t.classif] += t.valor;
-                    cMap[t.cat] = (cMap[t.cat] || 0) + t.valor;
-                }
-            });
+        function login() {
+            const email = document.getElementById('lEmail').value;
+            const senha = document.getElementById('lSenha').value;
+            let users = JSON.parse(localStorage.getItem('fin_users') || '[]');
+            let found = users.find(u => u.email === email && u.senha === senha);
+            if(found) { userLogado = found; localStorage.setItem('fin_logged', JSON.stringify(found)); mostrarTela('app'); }
+            else alert("E-mail ou senha incorretos.");
+        }
 
-            document.getElementById('cardReceitas').innerText = `R$ ${r.toFixed(2)}`;
-            document.getElementById('cardDespesas').innerText = `R$ ${d.toFixed(2)}`;
-            document.getElementById('cardInvestimentos').innerText = `R$ ${i.toFixed(2)}`;
-            document.getElementById('cardSaldo').innerText = `R$ ${(r - d - i).toFixed(2)}`;
+        function cadastrar() {
+            const email = document.getElementById('cEmail').value;
+            const nome = document.getElementById('cNomeUser').value;
+            const senha = document.getElementById('cSenha').value;
+            if(!email || !nome || !senha) return alert("Erro!");
+            let users = JSON.parse(localStorage.getItem('fin_users') || '[]');
+            if(users.some(u => u.email === email)) return alert("E-mail já cadastrado!");
+            users.push({ nome, email, senha, transacoes: [], cartoes: [] });
+            localStorage.setItem('fin_users', JSON.stringify(users));
+            alert("Cadastrado com sucesso!"); mostrarTela('loginTela');
+        }
 
-            // --- GRÁFICO DE PIZZA (Distribuição com Percentual) ---
-            if(charts.t) charts.t.destroy();
-            charts.t = new Chart(document.getElementById('chartTipos'), {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(tMap),
-                    datasets: [{
-                        data: Object.values(tMap),
-                        backgroundColor: ['#ef4444', '#f59e0b', '#0284c7'],
-                        ...config3D
-                    }]
-                },
-                options: {
-                    plugins: {
-                        datalabels: {
-                            color: '#fff',
-                            font: { weight: 'bold', size: 14 },
-                            formatter: (value, ctx) => {
-                                let sum = 0;
-                                let dataArr = ctx.chart.data.datasets[0].data;
-                                dataArr.map(data => { sum += data; });
-                                let percentage = (value * 100 / sum).toFixed(1) + "%";
-                                return sum > 0 ? percentage : '';
-                            }
-                        }
+        function abrirFatura(nomeBanco) {
+            bancoAtualFatura = nomeBanco;
+            document.getElementById('faturaNomeBanco').innerText = nomeBanco;
+            const hoje = new Date();
+            document.getElementById('faturaMes').value = hoje.getMonth();
+            mostrarTela('telaFatura');
+            renderizarFatura();
+        }
+
+        function renderizarFatura() {
+            const mes = parseInt(document.getElementById('faturaMes').value);
+            const ano = parseInt(document.getElementById('faturaAno').value);
+            const lista = document.getElementById('listaFatura');
+            let total = 0;
+            let html = "";
+
+            (userLogado.transacoes || []).forEach(t => {
+                if(t.tipo === 'despesa' && t.bancoVinculado === bancoAtualFatura) {
+                    const dt = new Date(t.data + "T00:00:00");
+                    const totalParcelas = t.parcelas || 1;
+                    const valorParcela = parseFloat(t.valor) / totalParcelas;
+                    let mesesDiferenca = (ano - dt.getFullYear()) * 12 + (mes - dt.getMonth());
+                    if(mesesDiferenca >= 0 && mesesDiferenca < totalParcelas) {
+                        total += valorParcela;
+                        html += `
+                            <div class="hist-item" style="border-left-color: #f87171">
+                                <div>
+                                    <b>${t.desc}</b> 
+                                    <small style="display:block; color:#94a3b8">
+                                        Compra em: ${dt.toLocaleDateString('pt-BR')} | 
+                                        Parcela: ${mesesDiferenca + 1}/${totalParcelas}
+                                    </small>
+                                </div>
+                                <div class="despesa">R$ ${valorParcela.toFixed(2)}</div>
+                            </div>
+                        `;
                     }
                 }
             });
 
-            // --- GRÁFICO MENSAL (Barras 3D simulado) ---
-            if(charts.m) charts.m.destroy();
-            charts.m = new Chart(document.getElementById('chartMensal'), {
-                type: 'bar',
-                data: {
-                    labels: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
-                    datasets: [
-                        {label:'Entradas', data:dEnt, backgroundColor:'#16a34a', ...config3D},
-                        {label:'Saídas', data:dSai, backgroundColor:'#dc2626', ...config3D}
-                    ]
-                },
-                options: {
-                    plugins: { datalabels: { display: false } }, // Esconde labels em barras para não poluir
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-
-            // --- GRÁFICO DE CATEGORIAS (Doughnut com Percentual) ---
-            if(charts.c) charts.c.destroy();
-            charts.c = new Chart(document.getElementById('chartCat'), {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(cMap),
-                    datasets: [{
-                        data: Object.values(cMap),
-                        backgroundColor:['#2563eb','#16a34a','#dc2626','#f59e0b','#7c3aed'],
-                        ...config3D
-                    }]
-                },
-                options: {
-                    plugins: {
-                        datalabels: {
-                            color: '#fff',
-                            font: { weight: 'bold', size: 12 },
-                            formatter: (value, ctx) => {
-                                let sum = 0;
-                                let dataArr = ctx.chart.data.datasets[0].data;
-                                dataArr.map(data => { sum += data; });
-                                let percentage = (value * 100 / sum).toFixed(1) + "%";
-                                return (value * 100 / sum) > 5 ? percentage : ''; // Só mostra se for > 5%
-                            }
-                        }
-                    }
-                }
-            });
+            document.getElementById('faturaTotal').innerText = `R$ ${total.toFixed(2)}`;
+            lista.innerHTML = html || "<p style='text-align:center; color:#94a3b8'>Nenhum lançamento para este período.</p>";
         }
 
-        // Funções de salvamento e auxiliares permanecem iguais
-        function save() { 
-            let u = JSON.parse(localStorage.getItem('fin_users') || '[]');
-            let idx = u.findIndex(x => x.email === user.email);
-            u[idx] = user;
-            localStorage.setItem('fin_users', JSON.stringify(u));
-            localStorage.setItem('fin_logged', JSON.stringify(user));
+        function toggleOpcoesPagamento() {
+            const pag = document.getElementById('tPagamento').value;
+            const isParcelado = ["Cartão de Crédito", "Financiamento", "Crediário"].includes(pag);
+            const isDebito = pag === "Cartão de Débito";
+            document.getElementById('divParcelas').classList.toggle('hidden', !isParcelado);
+            document.getElementById('divEscolherCartao').classList.toggle('hidden', !(isParcelado || isDebito));
+            if(isParcelado || isDebito) {
+                document.getElementById('tCartaoSel').innerHTML = (userLogado.cartoes || []).map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+            }
         }
 
-        function login() { 
-            const e = document.getElementById('loginEmail').value, s = document.getElementById('loginSenha').value; 
-            let f = (JSON.parse(localStorage.getItem('fin_users')) || []).find(x => x.email === e && x.senha === s); 
-            if(f) { user = f; localStorage.setItem('fin_logged', JSON.stringify(user)); mostrarTela('app'); } else alert("Erro!"); 
-        }
-
-        function cadastrar() { 
-            let u = JSON.parse(localStorage.getItem('fin_users')) || []; 
-            u.push({nome: document.getElementById('cadastroNome').value, email: document.getElementById('cadastroEmail').value, senha: document.getElementById('cadastroSenha').value, transacoes: [], cartoes: []}); 
-            localStorage.setItem('fin_users', JSON.stringify(u)); 
-            mostrarTela('loginTela'); 
-        }
-
-        function logout() { localStorage.removeItem('fin_logged'); location.reload(); }
-        function abrirCartoes() { mostrarTela('telaCartoes'); }
-        function abrirHistorico() {
-            mostrarTela('telaHistorico');
-            document.getElementById('listaContainer').innerHTML = user.transacoes.map((t, index) => ({...t, originalIndex: index}))
-                .sort((a,b) => new Date(b.data)-new Date(a.data))
-                .map(t => `<div class="item">
-                    <div><strong>${t.desc}</strong><br><small>${t.data} | ${t.cat}</small></div>
-                    <div class="acoes">
-                        <strong class="${t.tipo}" style="margin-right:15px">R$ ${t.valor.toFixed(2)}</strong>
-                        <button class="btn-editar" onclick="editarLancamento(${t.originalIndex})">Alterar</button>
-                        <button class="btn-excluir" onclick="excluirLancamento(${t.originalIndex})">Excluir</button>
-                    </div>
-                </div>`).join('');
+        function atualizarInterfaceTransacao() {
+            const isDespesa = document.getElementById('tTipo').value === 'despesa';
+            document.getElementById('divPagamento').classList.toggle('hidden', !isDespesa);
+            if(!isDespesa) {
+                document.getElementById('divEscolherCartao').classList.add('hidden');
+                document.getElementById('divParcelas').classList.add('hidden');
+            } else toggleOpcoesPagamento();
         }
 
         function salvarTransacao() {
             const desc = document.getElementById('tDesc').value;
             const valor = parseFloat(document.getElementById('tValor').value);
-            const tipo = document.getElementById('tTipo').value;
             const data = document.getElementById('tData').value;
-            if(!desc || !valor || !data) return alert("Preencha tudo!");
-            const novaTrans = { desc, valor, tipo, data, cat: document.getElementById('tCat').value, classif: tipo === 'receita' ? 'Entrada' : document.getElementById('tClassificacao').value, forma: document.getElementById('tForma').value, cartao: document.getElementById('tCartaoSelect').value };
-            const editIdx = parseInt(document.getElementById('editIndex').value);
-            if (editIdx > -1) user.transacoes[editIdx] = novaTrans; else user.transacoes.push(novaTrans);
-            save(); limparFormulario(); atualizarDashboard();
+            const tipo = document.getElementById('tTipo').value;
+            const forma = document.getElementById('tPagamento').value;
+            const parcelas = parseInt(document.getElementById('tParcelas').value) || 1;
+            const banco = document.getElementById('tCartaoSel').value;
+
+            if(!desc || !valor || !data) return alert("Preencha os campos obrigatórios!");
+
+            let pagFinal = forma;
+            if(tipo === 'despesa') {
+                if(["Cartão de Crédito", "Financiamento", "Crediário", "Cartão de Débito"].includes(forma)) {
+                    if(!banco) return alert("Selecione uma Instituição!");
+                    pagFinal = `${forma}${parcelas > 1 ? ' ' + parcelas + 'x' : ''} (${banco})`;
+                }
+            }
+
+            userLogado.transacoes.push({ desc, valor, tipo, data, pagamento: pagFinal, parcelas, bancoVinculado: (tipo === 'despesa' ? banco : null) });
+            atualizarStorage(); atualizarDashboard(); alert("Lançado!");
+            document.getElementById('tDesc').value = ""; document.getElementById('tValor').value = "";
+        }
+
+        function renderizarGrafico() {
+            const ctx = document.getElementById('cartaoChart').getContext('2d');
+            if(meuGrafico) meuGrafico.destroy();
+            const mesesLabels = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+            const datasets = (userLogado.cartoes || []).map((banco, index) => {
+                let comprometimentoMensal = new Array(12).fill(0);
+                (userLogado.transacoes || []).forEach(t => {
+                    if(t.tipo === 'despesa' && t.bancoVinculado === banco.nome) {
+                        const dataCompra = new Date(t.data + "T00:00:00");
+                        const mesInicio = dataCompra.getMonth();
+                        const valorParcela = parseFloat(t.valor) / (t.parcelas || 1);
+                        for(let i = 0; i < (t.parcelas || 1); i++) {
+                            let mesAlvo = mesInicio + i;
+                            if(mesAlvo < 12) comprometimentoMensal[mesAlvo] += valorParcela;
+                        }
+                    }
+                });
+                return {
+                    label: banco.nome,
+                    data: comprometimentoMensal,
+                    backgroundColor: `hsla(${index * 137}, 70%, 60%, 0.7)`,
+                    borderColor: `hsla(${index * 137}, 70%, 60%, 1)`,
+                    borderWidth: 1,
+                    borderRadius: 5
+                };
+            });
+
+            meuGrafico = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: mesesLabels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { labels: { color: '#fff' } },
+                        tooltip: { callbacks: { label: (context) => `${context.dataset.label}: R$ ${context.raw.toFixed(2)}` } }
+                    },
+                    scales: {
+                        y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function atualizarDashboard() {
+            let ent = 0, sai = 0;
+            const hoje = new Date();
+            const mesAtual = hoje.getMonth();
+            const anoAtual = hoje.getFullYear();
+
+            (userLogado.transacoes || []).forEach(t => {
+                const dt = new Date(t.data + "T00:00:00");
+                if(t.tipo === 'receita') {
+                    if(dt.getMonth() === mesAtual && dt.getFullYear() === anoAtual) ent += parseFloat(t.valor);
+                } else {
+                    const valorParcela = parseFloat(t.valor) / (t.parcelas || 1);
+                    let mesesDesdeInicio = (anoAtual - dt.getFullYear()) * 12 + (mesAtual - dt.getMonth());
+                    if(mesesDesdeInicio >= 0 && mesesDesdeInicio < (t.parcelas || 1)) sai += valorParcela;
+                }
+            });
+
+            document.getElementById('dashReceitas').innerText = `R$ ${ent.toFixed(2)}`;
+            document.getElementById('dashDespesas').innerText = `R$ ${sai.toFixed(2)}`;
+            const saldo = ent - sai;
+            document.getElementById('dashSaldo').innerText = `R$ ${saldo.toFixed(2)}`;
+            document.getElementById('dashSaldo').className = saldo >= 0 ? 'receita' : 'despesa';
         }
 
         function salvarCartao() {
             const nome = document.getElementById('cNome').value;
-            const fech = document.getElementById('cFech').value;
-            const venc = document.getElementById('cVenc').value;
-            if(!nome || !fech || !venc) return alert("Preencha tudo!");
-            if(!user.cartoes) user.cartoes = [];
-            user.cartoes.push({ nome, fech, venc });
-            save(); listarCartoes(); document.getElementById('cNome').value = ""; document.getElementById('cFech').value = ""; document.getElementById('cVenc').value = "";
+            const lim = document.getElementById('cLim').value;
+            if(!nome || !lim) return alert("Erro!");
+            if(!userLogado.cartoes) userLogado.cartoes = [];
+            userLogado.cartoes.push({ nome, limite: lim, fech: document.getElementById('cFech').value, venc: document.getElementById('cVenc').value });
+            atualizarStorage(); listarCartoes(); renderizarGrafico();
+            document.getElementById('cNome').value = ""; document.getElementById('cLim').value = "";
         }
 
         function listarCartoes() {
             const lista = document.getElementById('listaCartoes');
-            if(!user.cartoes || user.cartoes.length === 0) { lista.innerHTML = "Nenhum cartão."; return; }
-            lista.innerHTML = user.cartoes.map((c, i) => `<div class="item"><span><strong>${c.nome}</strong></span><button class="btn-excluir" onclick="user.cartoes.splice(${i},1); save(); listarCartoes();">Excluir</button></div>`).join('');
+            const hoje = new Date();
+            const mesAtual = hoje.getMonth();
+            const anoAtual = hoje.getFullYear();
+
+            lista.innerHTML = (userLogado.cartoes || []).map((c, i) => {
+                let totalComprometido = 0;
+                (userLogado.transacoes || []).forEach(t => {
+                    if(t.tipo === 'despesa' && t.bancoVinculado === c.nome) {
+                        const dt = new Date(t.data + "T00:00:00");
+                        const valorParcela = parseFloat(t.valor) / (t.parcelas || 1);
+                        const totalParcelas = t.parcelas || 1;
+                        let mesesDesdeCompra = (anoAtual - dt.getFullYear()) * 12 + (mesAtual - dt.getMonth());
+                        if (mesesDesdeCompra < totalParcelas) {
+                            let parcelasRestantes = totalParcelas - Math.max(0, mesesDesdeCompra);
+                            totalComprometido += (valorParcela * parcelasRestantes);
+                        }
+                    }
+                });
+                const limiteDisponivel = parseFloat(c.limite) - totalComprometido;
+                return `
+                <div class="card-item">
+                    <button class="card-delete" onclick="userLogado.cartoes.splice(${i},1); atualizarStorage(); listarCartoes(); renderizarGrafico();">Excluir</button>
+                    <div class="card-chip"></div>
+                    <div class="card-banco">${c.nome}</div>
+                    <div class="card-info">
+                        <div>
+                            <small>Limite Disponível</small>
+                            <b style="color: ${limiteDisponivel < 0 ? '#f87171' : '#4ade80'}">R$ ${limiteDisponivel.toFixed(2)}</b>
+                        </div>
+                        <div style="text-align: right">
+                            <small>Limite Total</small>
+                            <b>R$ ${parseFloat(c.limite).toFixed(2)}</b>
+                        </div>
+                    </div>
+                    <button class="btn-fatura" onclick="abrirFatura('${c.nome}')">Visualizar Fatura Detalhada</button>
+                </div>
+                `;
+            }).join('');
         }
 
-        function atualizarGraficoCartao() {
-            const dCartao = new Array(12).fill(0);
-            user.transacoes.forEach(t => { if(t.forma === 'credito') dCartao[new Date(t.data + 'T00:00:00').getMonth()] += t.valor; });
-            if(charts.cartao) charts.cartao.destroy();
-            charts.cartao = new Chart(document.getElementById('chartCartaoMensal'), { type: 'bar', data: { labels: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], datasets: [{ label: 'Gasto Cartão', data: dCartao, backgroundColor: '#7c3aed', ...config3D }]}});
+        function popularAnosFiltro(selectId) {
+            const selectAno = document.getElementById(selectId);
+            const anos = [...new Set((userLogado.transacoes || []).map(t => new Date(t.data + "T00:00:00").getFullYear()))];
+            const anoAtual = new Date().getFullYear();
+            if(!anos.includes(anoAtual)) anos.push(anoAtual);
+            anos.sort((a, b) => b - a);
+            const options = (selectId === 'faturaAno' ? '' : '<option value="todos">Todos</option>') + 
+                            anos.map(ano => `<option value="${ano}">${ano}</option>`).join('');
+            selectAno.innerHTML = options;
+            selectAno.value = anoAtual;
+            if(selectId === 'filtroAno') renderizarHistoricoFiltrado();
         }
 
-        function limparFormulario() {
-            document.getElementById('tDesc').value = ""; document.getElementById('tValor').value = ""; document.getElementById('editIndex').value = "-1";
-            document.getElementById('btnSalvar').innerText = "Adicionar Transação"; document.getElementById('btnCancelarEdit').classList.add('hidden');
+        function renderizarHistoricoFiltrado() {
+            const mesSel = document.getElementById('filtroMes').value;
+            const anoSel = document.getElementById('filtroAno').value;
+            const lista = document.getElementById('listaHist');
+            let filtrados = userLogado.transacoes || [];
+            if(mesSel !== 'todos') filtrados = filtrados.filter(t => new Date(t.data + "T00:00:00").getMonth() == mesSel);
+            if(anoSel !== 'todos') filtrados = filtrados.filter(t => new Date(t.data + "T00:00:00").getFullYear() == anoSel);
+            lista.innerHTML = filtrados.sort((a,b) => new Date(b.data) - new Date(a.data)).map((t, idx) => `
+                <div class="hist-item">
+                    <div><b>${t.desc}</b><br><small style="color:#94a3b8">${t.data.split('-').reverse().join('/')} - ${t.pagamento}</small></div>
+                    <div style="text-align:right"><span class="${t.tipo}">R$ ${parseFloat(t.valor).toFixed(2)}</span><br>
+                    <button onclick="excluirTransacao(${userLogado.transacoes.indexOf(t)})" style="background:none; border:none; color:#ef4444; font-size:0.7rem; cursor:pointer;">Excluir</button></div>
+                </div>
+            `).join('');
         }
 
-        window.onload = () => { if(localStorage.getItem('fin_logged')) { user = JSON.parse(localStorage.getItem('fin_logged')); mostrarTela('app'); } };
+        function excluirTransacao(i) {
+            if(confirm("Excluir?")) { userLogado.transacoes.splice(i, 1); atualizarStorage(); renderizarHistoricoFiltrado(); atualizarDashboard(); }
+        }
+
+        function atualizarStorage() {
+            localStorage.setItem('fin_logged', JSON.stringify(userLogado));
+            let users = JSON.parse(localStorage.getItem('fin_users') || '[]');
+            const idx = users.findIndex(u => u.email === userLogado.email);
+            if(idx !== -1) users[idx] = userLogado;
+            localStorage.setItem('fin_users', JSON.stringify(users));
+        }
+
+        function abrirHistorico() { mostrarTela('telaHist'); }
+        function logout() { localStorage.removeItem('fin_logged'); location.reload(); }
+
+        window.onload = () => { 
+            if(userLogado) mostrarTela('app'); 
+            else { mostrarTela('homeTela'); iniciarEfeitoDinheiro(); }
+        };
     </script>
 </body>
 </html>
